@@ -86,7 +86,8 @@ def play_game
       What's your guess?"
     else
       puts "#{@guess.upcase} has #{@correct_elements} of the correct elements
-      with #{@correct_positions} in the correct positions."
+      with #{@correct_positions} in the correct positions.
+      You've taken #{@guess_counter} guess"
     end
     @guess = gets.chomp.downcase
 
