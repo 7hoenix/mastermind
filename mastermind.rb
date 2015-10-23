@@ -50,8 +50,10 @@ end
 
 def correct_element?(guess)
   element_counter = 0
+  temp_key = @key.join.dup
   guess.chars.each do |char|
-    element_counter += 1 if @key.include?(char)
+    element_counter += 1 if temp_key.include?(char)
+    temp_key.sub!(char, "")
   end
   element_counter
 end
