@@ -1,3 +1,4 @@
+
 def navigator(first_time=false)
   if first_time
     puts "Would you like to (p)lay, read the (i)nstructions, or (q)uit?"
@@ -27,11 +28,43 @@ def quitting?(guess)
   end
 end
 
-def generate_key
-  colors = ["r", "g", "b", "y"]
+def difficulty?(flash=true)
+  puts "Didn't quite catch that" if flash
+  puts "What difficulty do you want to play at?
+  (B)eginner: 4 characters, 4 colors
+  (I)ntermediate: 6 characters, 5 colors
+  (A)dvanced: 8 characters, 6 colors"
+  a = gets.chomp.downcase
+  if a == "b" || a == "beginner" || a == "i" || a == "intermediate" || a == "a" || a == "advanced"
+    a.chars.pop
+  else
+    difficulty?(true)
+  end
+end
+
+def generate_key(difficulty)
   key = []
-  4.times { key << colors.sample }
+  if difficulty == "b"
+    colors = ["r", "g", "b", "y"]
+    4.times { key << colors.sample }
+  elsif difficulty == "i"
+    colors = ["r", "g", "b", "y", "p"]
+    6.times { key << colors.sample }
+  elsif difficulty == "a"
+    colors = ["r", "g", "b", "y", "p", "f"]
+    8.times { key << colors.sample }
+  end
   key
+end
+
+def colors_list(difficulty)
+  if difficulty == "b"
+    return 4, "(r)ed, (g)reen, (b)lue, (y)ellow"
+  elsif difficulty == "i"
+    return 5, "(r)ed, (g)reen, (b)lue, (y)ellow, (p)ink"
+  elsif difficulty == "a"
+    return 6, "(r)ed, (g)reen, (b)lue, (y)ellow, (p)ink, (f)ushcia"
+  end
 end
 
 def cheating?(guess)
@@ -40,11 +73,25 @@ def cheating?(guess)
   end
 end
 
-def valid?(guess)
-  if guess.length < 4
-    puts "Too short"
-  elsif guess.length > 4
-    puts "Too long"
+def valid?(guess, difficulty)
+  if difficulty == "b"
+    if guess.length < 4
+      puts "Too short"
+    elsif guess.length > 4
+      puts "Too long"
+    end
+  elsif difficulty == "i"
+    if guess.length < 6
+      puts "Too short"
+    elsif guess.length > 6
+      puts "Too long"
+    end
+  elsif difficulty == "a"
+    if guess.length < 8
+      puts "Too short"
+    elsif guess.length > 8
+      puts "Too long"
+    end
   end
 end
 
@@ -75,14 +122,36 @@ def elapsed_time(timer)
   return minutes, seconds
 end
 
+def compare_to_others(hashy_hash)
+  require "json"
+  File.open("results.json", "w") do |f|
+    f.write(hashy_hash.to_json)
+  end
+
+  file = File.read("results.json")
+  data_hash = JSON.parse(file)
+  time_sum = 0
+  guesses_sum = 0
+  data_hash.each do ||
+    time_sum += k
+    guesses_sum += v
+  end
+
+  avg_time  = time_sum / data_hash.length
+  avg_guesses = guesses_sum / data_hash.length
+  return (avg_time - time), (avg_guesses - guesses)
+end
+
 def play_game
-  @key = generate_key
+  difficulty_level = difficulty?
+  @key = generate_key(difficulty_level)
   @guess_counter = 0
   timer = Time.now
   loop do
     if @guess_counter == 0
-      puts "I have generated a beginner sequence with four elements made up of: (r)ed,
-      (g)reen, (b)lue, and (y)ellow. Use (q)uit at any time to end the game.
+      number, text = colors_list(difficulty_level)
+      puts "I have generated a sequence with #{number} elements made
+      up of: #{text}. Use (q)uit at any time to end the game.
       What's your guess?"
     else
       puts "#{@guess.upcase} has #{@correct_elements} of the correct elements
@@ -93,14 +162,23 @@ def play_game
 
     quitting?(@guess)
     cheating?(@guess)
-    valid?(@guess)
+    valid?(@guess, difficulty_level)
     @correct_elements  = correct_element?(@guess)
     @correct_positions = correct_position?(@guess)
     @guess_counter += 1
     break if correct?(@guess)
   end
   minutes, seconds = elapsed_time(timer)
-  puts "Congratulations! You guessed the sequence #{@key.join} in #{@guess_counter} guesses over #{minutes} minutes, #{seconds} seconds."
+  puts "Congratulations! You've guessed the sequence! What's your name?"
+  name = gets.chomp
+
+  jsony = { name: name,
+            minutes: minutes,
+            seconds: seconds,
+            guesses: @guess_counter }
+  results = compare_to_others(jsony)
+
+  # puts "Congratulations! You guessed the sequence #{@key.join} in #{@guess_counter} guesses over #{minutes} minutes, #{seconds} seconds."
 
   navigator
 end
